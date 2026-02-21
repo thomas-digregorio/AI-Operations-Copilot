@@ -60,91 +60,79 @@ def inject_styles() -> None:
     st.markdown(
         """
         <style>
-        @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap");
         :root {
-            --steel-ink: #1a2733;
-            --steel-slate: #344a5d;
-            --steel-teal: #1b6b6f;
-            --steel-ice: #e6f0f4;
-            --steel-amber: #f0a83a;
-            --steel-alert: #b33f3f;
-            --steel-card: rgba(255, 255, 255, 0.92);
+            --text-main: #1f2933;
+            --text-muted: #4b5563;
+            --bg-main: #f4f6f8;
+            --bg-card: #ffffff;
+            --border: #d7dde5;
+            --ok: #2563eb;
+            --warn: #b45309;
+            --alert: #b91c1c;
         }
-        html, body, [class*="css"]  {
-            font-family: "Manrope", sans-serif;
+        html, body, [class*="css"] {
+            font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-main);
         }
         [data-testid="stAppViewContainer"] {
-            background:
-                radial-gradient(circle at 8% 8%, rgba(27, 107, 111, 0.22), transparent 38%),
-                radial-gradient(circle at 88% 0%, rgba(240, 168, 58, 0.2), transparent 42%),
-                linear-gradient(145deg, #f7fbfd 0%, #edf3f7 45%, #f8fbfc 100%);
+            background: var(--bg-main);
         }
         [data-testid="stSidebar"] {
-            background: linear-gradient(190deg, #f8fbfc 0%, #edf2f5 100%);
-            border-right: 1px solid rgba(52, 74, 93, 0.15);
+            background: #ffffff;
+            border-right: 1px solid var(--border);
         }
         .hero-panel {
-            border: 1px solid rgba(26, 39, 51, 0.12);
-            background: linear-gradient(120deg, #ffffff 0%, #f2f8fb 100%);
-            border-radius: 18px;
-            padding: 1.1rem 1.2rem;
-            margin-bottom: 0.85rem;
-            box-shadow: 0 16px 30px rgba(26, 39, 51, 0.08);
-            animation: fadeSlide 0.5s ease-out;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 0.95rem 1.05rem;
+            margin-bottom: 0.75rem;
         }
         .hero-title {
-            font-size: 1.6rem;
-            font-weight: 800;
-            color: var(--steel-ink);
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-main);
             margin-bottom: 0.25rem;
         }
         .hero-sub {
-            color: var(--steel-slate);
-            font-size: 0.96rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
             margin: 0;
         }
         .status-chip {
             display: inline-block;
             border-radius: 999px;
-            padding: 0.2rem 0.65rem;
+            padding: 0.18rem 0.55rem;
             margin-right: 0.45rem;
             margin-bottom: 0.3rem;
-            border: 1px solid rgba(27, 107, 111, 0.25);
-            background: rgba(27, 107, 111, 0.07);
-            color: #0f4f52;
-            font-size: 0.78rem;
-            font-weight: 700;
+            border: 1px solid #c7d2fe;
+            background: #eef2ff;
+            color: #1e3a8a;
+            font-size: 0.76rem;
+            font-weight: 600;
         }
         .status-chip.alert {
-            border-color: rgba(179, 63, 63, 0.3);
-            background: rgba(179, 63, 63, 0.1);
-            color: #7e2323;
+            border-color: #fecaca;
+            background: #fef2f2;
+            color: var(--alert);
         }
         .status-chip.warn {
-            border-color: rgba(240, 168, 58, 0.35);
-            background: rgba(240, 168, 58, 0.15);
-            color: #87580a;
+            border-color: #fde68a;
+            background: #fffbeb;
+            color: var(--warn);
         }
         .result-card {
-            border-radius: 14px;
-            border: 1px solid rgba(52, 74, 93, 0.15);
-            background: var(--steel-card);
-            box-shadow: 0 10px 25px rgba(26, 39, 51, 0.06);
-            padding: 0.8rem 0.9rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            padding: 0.75rem 0.85rem;
             margin-bottom: 0.8rem;
-            animation: fadeSlide 0.45s ease-out;
         }
-        .mono-note {
-            font-family: "IBM Plex Mono", monospace;
-            font-size: 0.8rem;
-            color: #34516a;
-        }
-        @keyframes fadeSlide {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+        [data-testid="stMetricValue"] {
+            color: var(--text-main);
         }
         @media (max-width: 900px) {
-            .hero-title { font-size: 1.25rem; }
+            .hero-title { font-size: 1.2rem; }
             .hero-panel { padding: 0.9rem 0.85rem; }
         }
         </style>
