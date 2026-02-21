@@ -1,0 +1,2 @@
+Generate a structured quote draft JSON with conservative assumptions.
+Include escalation flag and missing info checklist.

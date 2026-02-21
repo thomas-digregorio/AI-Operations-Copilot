@@ -1,0 +1,2 @@
+Identify missing required fields and high-risk ambiguities.
+Return a concise checklist.

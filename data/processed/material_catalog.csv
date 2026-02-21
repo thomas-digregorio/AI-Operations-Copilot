@@ -1,0 +1,4 @@
+material_id,alloy_name,alloy_family,uns_number,product_forms_supported,min_thickness_mm,max_thickness_mm,min_width_mm,max_width_mm,common_applications,cert_options,base_lead_time_days,is_active
+MAT-316L-FOIL,316L,austenitic_stainless,S31603,foil;sheet;strip,0.01,3.0,5,1000,medical;electronics;chemical,ASTM_A240;EN_10204_3.1;RoHS,21,True
+MAT-304-SHEET,304,austenitic_stainless,S30400,sheet;strip,0.2,6.0,20,1500,food;appliance;architecture,ASTM_A240;EN_10204_3.1,14,True
+MAT-17-7PH-STRIP,17-7PH,precipitation_hardening,S17700,strip;sheet,0.05,2.5,10,1200,spring;aerospace;energy,AMS5528;EN_10204_3.1,28,True

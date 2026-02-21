@@ -1,0 +1,29 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    environment:
+      - APP_ENV=local
+      - DATABASE_URL=sqlite:////workspace/data/artifacts/app.db
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["streamlit", "run", "frontend/streamlit_app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./:/workspace
+    working_dir: /workspace
+    depends_on:
+      - api
+

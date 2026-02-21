@@ -1,0 +1,4 @@
+rule_id,rule_type,alloy_name,min_qty_kg,price_per_kg_low,price_per_kg_high
+PR-316L,price_band,316L,150,7.50,11.80
+PR-304,price_band,304,200,4.40,7.20
+PR-17-7PH,price_band,17-7PH,120,9.80,15.40
