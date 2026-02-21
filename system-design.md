@@ -232,7 +232,7 @@ Build the app with clear modular boundaries:
 
 \- relational DB for metadata/logs/history
 
-\- vector store for doc retrieval (pgvector preferred, Chroma acceptable fallback)
+\- vector store for doc retrieval (FAISS preferred for local-first; pgvector optional for later)
 
 \- local filesystem for artifacts
 
@@ -280,15 +280,23 @@ RAG:
 
 \- Embeddings provider:
 
-&nbsp; - support OpenAI embeddings via env config
+&nbsp; - default to local embeddings via SentenceTransformers (free, offline-capable)
 
-&nbsp; - also allow local fallback if no API key
+&nbsp; - support optional OpenAI embeddings only as a non-default extension
 
 \- Vector store:
 
-&nbsp; - Preferred: pgvector (Postgres)
+&nbsp; - Preferred: FAISS (local filesystem index)
 
-&nbsp; - Fallback: Chroma (local)
+&nbsp; - Optional alternative: pgvector (Postgres) for production migration
+
+\- LLM provider:
+
+&nbsp; - Preferred local runtime: Ollama
+
+&nbsp; - Preferred model family: Llama (for example `llama3.1:8b-instruct`)
+
+&nbsp; - keep deterministic fallback path when local LLM is unavailable
 
 \- Parsing:
 
@@ -2070,19 +2078,31 @@ DATABASE\_URL=sqlite:///./data/artifacts/app.db
 
 \# RAG / Embeddings
 
-EMBEDDING\_PROVIDER=openai
+EMBEDDING\_PROVIDER=local
+
+EMBEDDING\_MODEL=BAAI/bge-small-en-v1.5
+
+VECTOR\_STORE=faiss
+
+LLM\_PROVIDER=ollama
+
+LLM\_MODEL=llama3.1:8b-instruct
+
+\# Local LLM runtime
+
+OLLAMA\_BASE\_URL=http://localhost:11434
+
+\# Optional hosted provider (non-default)
 
 OPENAI\_API\_KEY=
 
-EMBEDDING\_MODEL=text-embedding-3-small
+\# OPENAI\_EMBEDDING\_MODEL=text-embedding-3-small
 
-LLM\_PROVIDER=openai
-
-LLM\_MODEL=gpt-4.1-mini
+\# OPENAI\_LLM\_MODEL=gpt-4.1-mini
 
 
 
-\# Local fallback options (if no API key)
+\# Fallback behavior (if local models are unavailable)
 
 USE\_LLM\_FALLBACK=true
 
@@ -2102,7 +2122,7 @@ Implement app/core/config.py using Pydantic Settings.
 
 
 
-The app should run even if no LLM API key is provided:
+The app should run even if local LLM/embedding services are unavailable:
 
 \- retrieval works
 
@@ -2440,7 +2460,7 @@ Follow these rules strictly:
 
 8\. Prefer graceful degradation
 
-\- if no API key / no embeddings provider, app should still run core deterministic and ML features
+\- if local LLM runtime or embeddings are unavailable, app should still run core deterministic and ML features
 
 \- retrieval may use local fallback or stub warning if embeddings unavailable
 
@@ -2506,7 +2526,7 @@ Also create:
 
 
 
-If external services are unavailable (OpenAI embeddings/LLM):
+If local AI services are unavailable (Ollama / local embedding model load):
 
 \- the project should still be runnable locally
 
