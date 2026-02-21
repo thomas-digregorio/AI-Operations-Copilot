@@ -1,0 +1,45 @@
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Local virtual/dev environments
+.venv/
+.venv*/
+venv/
+.conda-dev/
+
+# Environment and secret files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.secret
+secrets/
+
+# Local databases and vector indexes
+*.db
+*.sqlite
+*.sqlite3
+data/artifacts/
+
+# Test, lint, and tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
