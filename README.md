@@ -37,6 +37,10 @@ make run-ui
 UI:  http://localhost:8501
 API: http://localhost:8000/docs
 ```
+8. (Optional) Manage DB schema with Alembic:
+```bash
+make db-upgrade
+```
 
 ## Testing
 ```bash
@@ -45,6 +49,12 @@ make test
 ```bash
 ruff check app tests frontend
 ```
+
+## Key APIs
+- Quote: `/quote/validate`, `/quote/draft`, `/quote/answer`, `/quote/history/similar`
+- Retrieval: `/retrieval/ingest/public`, `/retrieval/ingest/internal`, `/retrieval/reindex`, `/retrieval/search`, `/retrieval/docs`
+- ML: `/ml/train/steel-faults`, `/ml/predict/steel-faults`, `/ml/predict/steel-faults/batch`, `/ml/explain/local`, `/ml/explain/global`
+- Diagnostics: `/diagnostics/status`, `/diagnostics/eval-report`, `/diagnostics/drift-summary`, `/diagnostics/prediction-summary`
 
 ## Local AI Defaults
 - LLM: `llama3.1:8b` via Ollama (`http://127.0.0.1:11434`)

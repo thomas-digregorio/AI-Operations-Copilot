@@ -56,3 +56,18 @@ def test_eval_report_endpoint_returns_status(synthetic_steel_dataset):
     body = response.json()
     assert body["performance_status"] in {"pass", "warn", "fail", "missing"}
     assert "metrics_path" in body
+
+
+def test_prediction_summary_endpoint_tracks_persistent_logs(synthetic_steel_dataset):
+    svc = SteelModelService()
+    svc.train(str(synthetic_steel_dataset))
+    sample = {k: 0.2 for k in FEATURE_COLUMNS}
+    pred = client.post("/ml/predict/steel-faults", json={"features": sample})
+    assert pred.status_code == 200
+
+    response = client.get("/diagnostics/prediction-summary", params={"window_days": 90})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total_predictions"] >= 1
+    assert "class_distribution" in body
+    assert "daily_prediction_counts" in body

@@ -5,9 +5,11 @@ from pathlib import Path
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
+from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.constants import INTERNAL_MOCK_DOCS_DIR, ULBRICH_PUBLIC_DIR
+from app.db.crud.docs import create_retrieval_audit, list_documents, replace_documents_for_source
 from app.schemas.common import Citation
 from app.utils.citation_utils import build_citation
 from app.utils.file_loaders import collect_documents
@@ -24,20 +26,53 @@ class RAGService:
     def _index_path(self) -> Path:
         return Path(self.settings.vector_dir)
 
-    def build_index(self) -> dict:
-        docs = collect_documents(ULBRICH_PUBLIC_DIR) + collect_documents(INTERNAL_MOCK_DOCS_DIR)
+    @staticmethod
+    def _source_dir(source_type: str) -> Path:
+        source = source_type.lower()
+        if source == "public":
+            return ULBRICH_PUBLIC_DIR
+        if source == "internal":
+            return INTERNAL_MOCK_DOCS_DIR
+        raise ValueError("source_type must be 'public' or 'internal'.")
+
+    def ingest_source(self, source_type: str, db: Session | None = None) -> dict:
+        docs = collect_documents(self._source_dir(source_type))
+        chunks_indexed = sum(len(chunk_text(d.get("text", ""))) for d in docs)
+        if db is not None:
+            replace_documents_for_source(db, source_type=source_type, docs=docs)
+        return {
+            "status": "ok" if docs else "empty",
+            "source_type": source_type,
+            "files_discovered": len(docs),
+            "chunks_indexed": chunks_indexed,
+            "message": "" if docs else "No files found for source.",
+        }
+
+    def build_index(self, db: Session | None = None) -> dict:
+        public_docs = collect_documents(ULBRICH_PUBLIC_DIR)
+        internal_docs = collect_documents(INTERNAL_MOCK_DOCS_DIR)
+
+        if db is not None:
+            replace_documents_for_source(db, source_type="public", docs=public_docs)
+            replace_documents_for_source(db, source_type="internal", docs=internal_docs)
+
         documents: list[Document] = []
-        for d in docs:
-            for i, chunk in enumerate(chunk_text(d["text"])):
-                documents.append(
-                    Document(
-                        page_content=chunk,
-                        metadata={"source": d["source"], "chunk_id": i},
+        for source_type, docs in [("public", public_docs), ("internal", internal_docs)]:
+            for d in docs:
+                for i, chunk in enumerate(chunk_text(d["text"])):
+                    documents.append(
+                        Document(
+                            page_content=chunk,
+                            metadata={
+                                "source": d["source"],
+                                "source_type": source_type,
+                                "chunk_id": i,
+                            },
+                        )
                     )
-                )
 
         if not documents:
-            return {"status": "empty", "message": "No source documents found for indexing."}
+            return {"status": "empty", "chunks_indexed": 0, "message": "No source documents found."}
 
         embeddings = self._embedding_model()
         store = FAISS.from_documents(documents, embeddings)
@@ -47,6 +82,7 @@ class RAGService:
             "status": "ok",
             "chunks_indexed": len(documents),
             "index_path": str(self._index_path()),
+            "message": "",
         }
 
     def _load_index(self) -> FAISS | None:
@@ -56,7 +92,29 @@ class RAGService:
         embeddings = self._embedding_model()
         return FAISS.load_local(str(index_path), embeddings, allow_dangerous_deserialization=True)
 
-    def search(self, query: str, top_k: int = 5) -> list[Citation]:
+    def list_indexed_docs(self, db: Session | None = None) -> list[dict]:
+        if db is not None:
+            docs = list_documents(db)
+            if docs:
+                return docs
+
+        files = []
+        pairs = [("public", ULBRICH_PUBLIC_DIR), ("internal", INTERNAL_MOCK_DOCS_DIR)]
+        for source_type, directory in pairs:
+            for d in collect_documents(directory):
+                files.append(
+                    {
+                        "doc_id": None,
+                        "source_type": source_type,
+                        "title": Path(d["source"]).name,
+                        "path_or_url": d["source"],
+                        "checksum": None,
+                        "chunk_count": len(chunk_text(d["text"])),
+                    }
+                )
+        return files
+
+    def search(self, query: str, top_k: int = 5, db: Session | None = None) -> list[Citation]:
         store = self._load_index()
         if store is None:
             return []
@@ -64,11 +122,17 @@ class RAGService:
         results = store.similarity_search_with_score(query, k=top_k)
         citations: list[Citation] = []
         for doc, score in results:
-            citations.append(
-                build_citation(
-                    source=str(doc.metadata.get("source", "unknown")),
-                    snippet=doc.page_content,
-                    score=float(score),
-                )
+            citation = build_citation(
+                source=str(doc.metadata.get("source", "unknown")),
+                snippet=doc.page_content,
+                score=float(score),
             )
+            citations.append(citation)
+            if db is not None:
+                create_retrieval_audit(
+                    db,
+                    query=query,
+                    source=citation.source,
+                    score=float(citation.score or 0.0),
+                )
         return citations

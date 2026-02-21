@@ -5,10 +5,14 @@ from pydantic import BaseModel, Field
 
 class TrainSteelFaultModelRequest(BaseModel):
     dataset_path: str | None = None
+    model_type: str = "xgboost"
+    use_business_enriched_features: bool = False
+    random_seed: int = 42
 
 
 class TrainSteelFaultModelResponse(BaseModel):
     status: str
+    model_type: str = "xgboost"
     model_path: str
     metrics_path: str
     metrics: dict[str, Any]
@@ -42,6 +46,12 @@ class SteelLocalExplainResponse(BaseModel):
     feature_contributions: dict[str, float]
 
 
+class SteelGlobalExplainResponse(BaseModel):
+    model_name: str
+    feature_importance: dict[str, float] = Field(default_factory=dict)
+    top_features: list[str] = Field(default_factory=list)
+
+
 class DriftSummaryRequest(BaseModel):
     rows: list[dict[str, float]]
     threshold: float = Field(default=1.0, ge=0.3, le=3.0)
@@ -70,3 +80,10 @@ class EvaluationReportResponse(BaseModel):
     performance_notes: list[str] = Field(default_factory=list)
     metrics_path: str
     eval_summary_path: str
+
+
+class PredictionMonitoringResponse(BaseModel):
+    total_predictions: int
+    average_confidence: float
+    class_distribution: dict[str, int] = Field(default_factory=dict)
+    daily_prediction_counts: list[dict[str, Any]] = Field(default_factory=list)

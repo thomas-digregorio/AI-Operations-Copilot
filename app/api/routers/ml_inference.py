@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.db.crud.predictions import create_prediction_audit
+from app.db.crud.predictions import create_ml_prediction_log, create_prediction_audit
 from app.db.session import get_db_session
 from app.schemas.ml import (
     SteelFaultBatchPredictionRequest,
     SteelFaultBatchPredictionResponse,
     SteelFaultPredictionRequest,
     SteelFaultPredictionResult,
+    SteelGlobalExplainResponse,
     SteelLocalExplainRequest,
     SteelLocalExplainResponse,
 )
@@ -31,20 +32,55 @@ def predict_steel_fault(
         confidence=out["confidence"],
         has_explanation=False,
     )
+    create_ml_prediction_log(
+        db,
+        model_name="steel_fault_xgb",
+        model_version="v1",
+        input_payload=request.features,
+        output_payload=out,
+        predicted_class=out["predicted_class"],
+        confidence=out["confidence"],
+    )
     return SteelFaultPredictionResult(**out)
 
 
 @router.post("/predict/steel-faults/batch", response_model=SteelFaultBatchPredictionResponse)
 def predict_steel_fault_batch(
     request: SteelFaultBatchPredictionRequest,
+    db: Session = Depends(get_db_session),
 ) -> SteelFaultBatchPredictionResponse:
     out = model_service.predict_batch(request.rows)
+    for row_in, row_out in zip(request.rows, out, strict=False):
+        create_ml_prediction_log(
+            db,
+            model_name="steel_fault_xgb",
+            model_version="v1",
+            input_payload=row_in,
+            output_payload=row_out,
+            predicted_class=row_out["predicted_class"],
+            confidence=float(row_out["confidence"]),
+        )
     return SteelFaultBatchPredictionResponse(
         predictions=[SteelFaultPredictionResult(**row) for row in out]
     )
 
 
 @router.post("/explain/local", response_model=SteelLocalExplainResponse)
-def explain_local(request: SteelLocalExplainRequest) -> SteelLocalExplainResponse:
+def explain_local(
+    request: SteelLocalExplainRequest,
+    db: Session = Depends(get_db_session),
+) -> SteelLocalExplainResponse:
     out = explain_service.explain_local(request.features)
+    create_prediction_audit(
+        db,
+        predicted_class=out["predicted_class"],
+        confidence=1.0,
+        has_explanation=True,
+    )
     return SteelLocalExplainResponse(**out)
+
+
+@router.get("/explain/global", response_model=SteelGlobalExplainResponse)
+def explain_global(top_k: int = Query(default=20, ge=1, le=100)) -> SteelGlobalExplainResponse:
+    out = explain_service.explain_global(top_k=top_k)
+    return SteelGlobalExplainResponse(**out)

@@ -110,12 +110,12 @@ class SteelModelService:
         X = df[FEATURE_COLUMNS].copy()
         return X, y_idx
 
-    def train(self, dataset_path: str | None = None) -> dict:
+    def train(self, dataset_path: str | None = None, random_seed: int = 42) -> dict:
         df = self.load_raw_dataset(dataset_path)
         X, y = self.convert_multiclass_labels(df)
 
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42, stratify=y
+            X, y, test_size=0.2, random_state=random_seed, stratify=y
         )
 
         model = XGBClassifier(
@@ -129,7 +129,7 @@ class SteelModelService:
             eval_metric="mlogloss",
             n_jobs=4,
             tree_method="hist",
-            random_state=42,
+            random_state=random_seed,
         )
         model.fit(X_train, y_train)
 

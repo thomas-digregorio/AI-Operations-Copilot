@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
+from collections import Counter, defaultdict
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from sqlalchemy.orm import Session
 
 from app.core.constants import DEFAULT_METRICS_PATH, DEFAULT_MODEL_PATH, EVALS_DIR, ROOT_DIR
+from app.db.models import MLPredictionLog
 
 
 class MonitoringService:
@@ -144,6 +148,39 @@ class MonitoringService:
         report["performance_status"] = status
         report["performance_notes"] = notes
         return report
+
+    def prediction_monitoring_summary(self, db: Session, window_days: int = 30) -> dict:
+        cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
+        rows = (
+            db.query(MLPredictionLog)
+            .filter(MLPredictionLog.created_at >= cutoff)
+            .order_by(MLPredictionLog.created_at.asc())
+            .all()
+        )
+        if not rows:
+            return {
+                "total_predictions": 0,
+                "average_confidence": 0.0,
+                "class_distribution": {},
+                "daily_prediction_counts": [],
+            }
+
+        total = len(rows)
+        avg_conf = sum(float(r.confidence) for r in rows) / total
+        class_dist = Counter(r.predicted_class for r in rows)
+
+        by_day = defaultdict(int)
+        for row in rows:
+            day_key = row.created_at.date().isoformat()
+            by_day[day_key] += 1
+        daily_counts = [{"date": day, "count": count} for day, count in sorted(by_day.items())]
+
+        return {
+            "total_predictions": total,
+            "average_confidence": round(avg_conf, 4),
+            "class_distribution": dict(sorted(class_dist.items())),
+            "daily_prediction_counts": daily_counts,
+        }
 
     @staticmethod
     def _severity(max_shift: float, flag_count: int, observed_count: int, threshold: float) -> str:

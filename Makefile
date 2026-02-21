@@ -6,7 +6,7 @@ RUFF := ./.conda-dev/bin/ruff
 UVICORN := ./.conda-dev/bin/uvicorn
 STREAMLIT := ./.conda-dev/bin/streamlit
 
-.PHONY: install lint test run-api run-ui seed-data ingest-docs train-ml smoke
+.PHONY: install lint test run-api run-ui seed-data ingest-docs train-ml smoke db-upgrade db-downgrade
 
 install:
 	$(PIP) install -r requirements.txt
@@ -34,6 +34,12 @@ ingest-docs:
 train-ml:
 	$(PY) -m app.pipelines.train_steel_fault_model
 	$(PY) -m app.pipelines.evaluate_steel_fault_model
+
+db-upgrade:
+	$(PY) -m alembic upgrade head
+
+db-downgrade:
+	$(PY) -m alembic downgrade -1
 
 smoke:
 	$(PY) -m app.pipelines.build_synthetic_quote_data

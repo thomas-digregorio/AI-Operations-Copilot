@@ -595,7 +595,7 @@ with ml_tab:
 
 with diag_tab:
     st.subheader("Runtime and Evaluation Diagnostics")
-    dcol1, dcol2, dcol3, dcol4 = st.columns(4)
+    dcol1, dcol2, dcol3, dcol4, dcol5 = st.columns(5)
     with dcol1:
         if st.button("Health", use_container_width=True):
             payload, error = api_json("GET", f"{api_base}/health", timeout=20)
@@ -626,6 +626,17 @@ with diag_tab:
                 st.error(error)
             else:
                 st.session_state.reindex_report = payload
+    with dcol5:
+        if st.button("Prediction Summary", use_container_width=True):
+            payload, error = api_json(
+                "GET",
+                f"{api_base}/diagnostics/prediction-summary?window_days=30",
+                timeout=30,
+            )
+            if error:
+                st.error(error)
+            else:
+                st.session_state.prediction_summary = payload
 
     left, right = st.columns(2)
     with left:
@@ -642,6 +653,9 @@ with diag_tab:
         st.markdown("##### Reindex Result")
         if st.session_state.get("reindex_report"):
             st.json(st.session_state.reindex_report)
+        st.markdown("##### Prediction Summary")
+        if st.session_state.get("prediction_summary"):
+            st.json(st.session_state.prediction_summary)
 
     st.markdown("---")
     st.markdown("#### Local Asset Snapshot")

@@ -1,6 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
-from app.schemas.ml import DriftSummaryRequest, DriftSummaryResponse, EvaluationReportResponse
+from app.db.session import get_db_session
+from app.schemas.ml import (
+    DriftSummaryRequest,
+    DriftSummaryResponse,
+    EvaluationReportResponse,
+    PredictionMonitoringResponse,
+)
 from app.services.diagnostics_service import DiagnosticsService
 from app.services.monitoring_service import MonitoringService
 
@@ -24,3 +31,12 @@ def drift_summary(request: DriftSummaryRequest) -> DriftSummaryResponse:
 def eval_report() -> EvaluationReportResponse:
     out = monitoring_service.evaluation_report()
     return EvaluationReportResponse(**out)
+
+
+@router.get("/prediction-summary", response_model=PredictionMonitoringResponse)
+def prediction_summary(
+    window_days: int = 30,
+    db: Session = Depends(get_db_session),
+) -> PredictionMonitoringResponse:
+    out = monitoring_service.prediction_monitoring_summary(db=db, window_days=window_days)
+    return PredictionMonitoringResponse(**out)

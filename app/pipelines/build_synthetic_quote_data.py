@@ -12,6 +12,8 @@ from app.core.constants import (
     PROCESSED_DATA_DIR,
     QUOTE_HISTORY_PATH,
 )
+from app.db.crud.requests import replace_quote_history_records
+from app.db.session import Base, SessionLocal, engine
 
 
 def build_material_catalog() -> pd.DataFrame:
@@ -151,9 +153,17 @@ def main() -> None:
     prc.to_csv(PRICING_RULES_PATH, index=False)
     hist.to_csv(QUOTE_HISTORY_PATH, index=False)
 
+    Base.metadata.create_all(bind=engine)
+    session = SessionLocal()
+    try:
+        synced = replace_quote_history_records(session, hist.to_dict(orient="records"))
+    finally:
+        session.close()
+
     print(f"Wrote {MATERIAL_CATALOG_PATH}")
     print(f"Wrote {PRICING_RULES_PATH}")
     print(f"Wrote {QUOTE_HISTORY_PATH} ({len(hist)} rows)")
+    print(f"Synced quote history rows into DB: {synced}")
 
 
 if __name__ == "__main__":

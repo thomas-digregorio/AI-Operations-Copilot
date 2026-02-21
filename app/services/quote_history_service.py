@@ -17,25 +17,43 @@ class QuoteHistoryService:
         return pd.read_csv(self.history_path)
 
     def find_similar_quotes(
-        self, alloy_name: str | None, product_form: str | None, qty_kg: float | None, top_k: int = 5
+        self,
+        alloy_name: str | None,
+        product_form: str | None,
+        qty_kg: float | None,
+        thickness_mm: float | None = None,
+        width_mm: float | None = None,
+        top_k: int = 5,
     ) -> list[dict]:
         df = self._load_history()
         if df.empty:
             return []
 
+        df = df.copy()
+        df["score"] = 0.0
+
         if alloy_name:
-            df = df[df["alloy_name"].str.lower() == alloy_name.lower()]
+            df["score"] += df["alloy_name"].str.lower().eq(alloy_name.lower()).astype(float) * 0.45
+
         if product_form:
-            df = df[df["product_form"].str.lower() == product_form.lower()]
-        if df.empty:
-            return []
+            df["score"] += (
+                df["product_form"].str.lower().eq(product_form.lower()).astype(float) * 0.20
+            )
 
         if qty_kg is not None and "qty_kg" in df.columns:
-            df = df.assign(distance=(df["qty_kg"] - qty_kg).abs())
-        else:
-            df = df.assign(distance=0.0)
+            qty_delta = (df["qty_kg"] - qty_kg).abs().fillna(1e9)
+            df["score"] += qty_delta.apply(lambda d: 0.15 * math.exp(-float(d) / 800.0))
 
-        df = df.sort_values(["distance", "quote_date"], ascending=[True, False])
+        if thickness_mm is not None and "thickness_mm" in df.columns:
+            th_delta = (df["thickness_mm"] - thickness_mm).abs().fillna(1e9)
+            df["score"] += th_delta.apply(lambda d: 0.10 * math.exp(-float(d) / 0.25))
+
+        if width_mm is not None and "width_mm" in df.columns:
+            wd_delta = (df["width_mm"] - width_mm).abs().fillna(1e9)
+            df["score"] += wd_delta.apply(lambda d: 0.10 * math.exp(-float(d) / 250.0))
+
+        df = df.sort_values(["score", "quote_date"], ascending=[False, False])
         out = df.head(top_k).copy()
-        out["similarity_score"] = out["distance"].apply(lambda d: round(math.exp(-d / 500.0), 4))
+        out["similarity_score"] = out["score"].round(4)
+        out.drop(columns=["score"], inplace=True, errors="ignore")
         return out.to_dict(orient="records")

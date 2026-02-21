@@ -1,9 +1,15 @@
+from app.db.session import Base, SessionLocal, engine
 from app.services.rag_service import RAGService
 
 
 def main() -> None:
+    Base.metadata.create_all(bind=engine)
+    session = SessionLocal()
     service = RAGService()
-    result = service.build_index()
+    try:
+        result = service.build_index(db=session)
+    finally:
+        session.close()
     print(result)
 
 
