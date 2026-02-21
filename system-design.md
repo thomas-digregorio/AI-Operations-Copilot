@@ -276,7 +276,7 @@ Backend:
 
 RAG:
 
-\- Choose ONE: LangChain or LlamaIndex (keep simple)
+\- Use LangChain (chosen for this project)
 
 \- Embeddings provider:
 
@@ -294,7 +294,7 @@ RAG:
 
 &nbsp; - Preferred local runtime: Ollama
 
-&nbsp; - Preferred model family: Llama (for example `llama3.1:8b-instruct`)
+&nbsp; - Preferred model family: Llama (for example `llama3.1:8b`)
 
 &nbsp; - keep deterministic fallback path when local LLM is unavailable
 
@@ -2086,7 +2086,7 @@ VECTOR\_STORE=faiss
 
 LLM\_PROVIDER=ollama
 
-LLM\_MODEL=llama3.1:8b-instruct
+LLM\_MODEL=llama3.1:8b
 
 \# Local LLM runtime
 
