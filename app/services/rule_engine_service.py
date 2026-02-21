@@ -109,8 +109,7 @@ class RuleEngineService:
                     WarningItem(
                         code="cert_mismatch",
                         message=(
-                            f"Requested cert {quote.cert_required} not listed "
-                            "for selected alloy."
+                            f"Requested cert {quote.cert_required} not listed for selected alloy."
                         ),
                     )
                 )
@@ -143,8 +142,7 @@ class RuleEngineService:
                             WarningItem(
                                 code="below_moq",
                                 message=(
-                                    f"Requested quantity {quote.qty_kg}kg "
-                                    f"is below MOQ {moq}kg."
+                                    f"Requested quantity {quote.qty_kg}kg is below MOQ {moq}kg."
                                 ),
                             )
                         )

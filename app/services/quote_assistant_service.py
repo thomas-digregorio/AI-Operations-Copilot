@@ -82,9 +82,7 @@ class QuoteAssistantService:
     def draft(self, quote: QuoteRequest) -> QuoteDraftResponse:
         validation = self.validate(quote)
         search_query = (
-            f"{quote.alloy_name or ''} "
-            f"{quote.product_form or ''} "
-            f"{quote.cert_required or ''}"
+            f"{quote.alloy_name or ''} {quote.product_form or ''} {quote.cert_required or ''}"
         ).strip()
         citations = self.rag_service.search(
             search_query,

@@ -32,10 +32,18 @@ make train-ml
 make run-api
 make run-ui
 ```
+7. Open the live demo:
+```text
+UI:  http://localhost:8501
+API: http://localhost:8000/docs
+```
 
 ## Testing
 ```bash
 make test
+```
+```bash
+ruff check app tests frontend
 ```
 
 ## Local AI Defaults

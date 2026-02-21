@@ -1,4 +1,3 @@
-
 from app.core.constants import INTERNAL_MOCK_DOCS_DIR, ULBRICH_PUBLIC_DIR
 from app.services.rag_service import RAGService
 
