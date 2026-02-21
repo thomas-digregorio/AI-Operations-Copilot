@@ -161,6 +161,12 @@ def api_json(
 ) -> tuple[Any | None, str | None]:
     try:
         response = requests.request(method=method, url=url, json=payload, timeout=timeout)
+    except requests.ConnectionError as exc:
+        return (
+            None,
+            "Could not connect to API. Start the backend with `make run-api` and keep it running. "
+            f"Details: {exc}",
+        )
     except requests.RequestException as exc:
         return None, f"Request failed: {exc}"
 
