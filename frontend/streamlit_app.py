@@ -82,6 +82,12 @@ def inject_styles() -> None:
             background: #ffffff;
             border-right: 1px solid var(--border);
         }
+        [data-testid="stToolbar"] {
+            display: none !important;
+        }
+        #MainMenu {
+            visibility: hidden;
+        }
         .hero-panel {
             border: 1px solid var(--border);
             background: var(--bg-card);
