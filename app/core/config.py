@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     vector_dir: str = Field(default="./data/artifacts/vector_index", alias="VECTOR_DIR")
 
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
+    cors_allow_origins: str = Field(default="*", alias="CORS_ALLOW_ORIGINS")
 
     def ensure_runtime_dirs(self) -> None:
         for path in [

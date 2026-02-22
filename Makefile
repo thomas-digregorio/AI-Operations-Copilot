@@ -6,7 +6,7 @@ RUFF := ./.conda-dev/bin/ruff
 UVICORN := ./.conda-dev/bin/uvicorn
 STREAMLIT := ./.conda-dev/bin/streamlit
 
-.PHONY: install lint test run-api run-ui seed-data ingest-docs train-ml smoke db-upgrade db-downgrade
+.PHONY: install lint test run-api run-ui seed-data ingest-docs train-ml smoke db-upgrade db-downgrade deploy-gcp
 
 install:
 	$(PIP) install -r requirements.txt
@@ -47,3 +47,6 @@ smoke:
 	$(PY) -m app.pipelines.build_vector_index
 	$(PY) -m app.pipelines.train_steel_fault_model
 	$(PY) -m app.pipelines.evaluate_steel_fault_model
+
+deploy-gcp:
+	./deploy/gcp/deploy_cloud_run.sh

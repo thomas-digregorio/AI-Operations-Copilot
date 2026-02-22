@@ -1,0 +1,21 @@
+.git
+.gitignore
+.conda-dev
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+
+# Keep images lean and avoid leaking local state.
+.env
+.env.*
+!.env.example
+data/artifacts
+.DS_Store

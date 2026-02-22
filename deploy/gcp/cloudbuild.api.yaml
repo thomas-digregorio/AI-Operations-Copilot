@@ -1,0 +1,23 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.api
+      - -t
+      - ${_IMAGE}
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_IMAGE}
+
+images:
+  - ${_IMAGE}
+
+substitutions:
+  _IMAGE: us-central1-docker.pkg.dev/ulbrich-app/ulbrich-containers/api:dev
+
+options:
+  logging: CLOUD_LOGGING_ONLY

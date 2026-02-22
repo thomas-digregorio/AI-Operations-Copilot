@@ -7,7 +7,6 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from xgboost import XGBClassifier
 
 from app.core.constants import (
     DEFAULT_FEATURES_PATH,
@@ -111,6 +110,8 @@ class SteelModelService:
         return X, y_idx
 
     def train(self, dataset_path: str | None = None, random_seed: int = 42) -> dict:
+        from xgboost import XGBClassifier
+
         df = self.load_raw_dataset(dataset_path)
         X, y = self.convert_multiclass_labels(df)
 

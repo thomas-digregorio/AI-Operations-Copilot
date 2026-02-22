@@ -1,0 +1,83 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.api
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/api:$SHORT_SHA
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/api:$SHORT_SHA
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: /bin/bash
+    args: 
+      - -c
+      - |
+        set -euo pipefail
+        gcloud run deploy ${_API_SERVICE} \
+          --region=${_REGION} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --service-account=${_API_SA} \
+          --port=8000 \
+          --cpu=2 \
+          --memory=4Gi \
+          --timeout=300 \
+          --min-instances=0 \
+          --max-instances=2 \
+          --set-env-vars="APP_ENV=cloud,LOG_LEVEL=INFO,CORS_ALLOW_ORIGINS=*,DATABASE_URL=sqlite:////tmp/app.db,DATA_DIR=/tmp/data,MODEL_DIR=/tmp/data/artifacts/models,VECTOR_DIR=/tmp/data/artifacts/vector_index,EMBEDDING_PROVIDER=local,EMBEDDING_MODEL=BAAI/bge-small-en-v1.5,LLM_PROVIDER=ollama,LLM_MODEL=llama3.1:8b,OLLAMA_BASE_URL=http://127.0.0.1:11434,USE_LLM_FALLBACK=true" \
+          --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/api:$SHORT_SHA
+        gcloud run services describe ${_API_SERVICE} \
+          --region=${_REGION} \
+          --format='value(status.url)' >/workspace/api_url.txt
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile.ui
+      - -t
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/ui:$SHORT_SHA
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/ui:$SHORT_SHA
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: /bin/bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        API_URL="$(cat /workspace/api_url.txt)"
+        gcloud run deploy ${_UI_SERVICE} \
+          --region=${_REGION} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --service-account=${_UI_SA} \
+          --port=8501 \
+          --cpu=1 \
+          --memory=1Gi \
+          --timeout=300 \
+          --min-instances=0 \
+          --max-instances=1 \
+          --set-env-vars="API_BASE_URL=${API_URL}" \
+          --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/ui:$SHORT_SHA
+
+substitutions:
+  _REGION: us-central1
+  _REPO: ulbrich-containers
+  _API_SERVICE: ulbrich-api
+  _UI_SERVICE: ulbrich-ui
+  _API_SA: ulbrich-run-api@ulbrich-app.iam.gserviceaccount.com
+  _UI_SA: ulbrich-run-ui@ulbrich-app.iam.gserviceaccount.com
+
+options:
+  logging: CLOUD_LOGGING_ONLY

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
-from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
-from langchain_huggingface import HuggingFaceEmbeddings
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -20,7 +19,9 @@ class RAGService:
     def __init__(self):
         self.settings = get_settings()
 
-    def _embedding_model(self):
+    def _embedding_model(self) -> Any:
+        from langchain_huggingface import HuggingFaceEmbeddings
+
         return HuggingFaceEmbeddings(model_name=self.settings.embedding_model)
 
     def _index_path(self) -> Path:
@@ -49,6 +50,8 @@ class RAGService:
         }
 
     def build_index(self, db: Session | None = None) -> dict:
+        from langchain_community.vectorstores import FAISS
+
         public_docs = collect_documents(ULBRICH_PUBLIC_DIR)
         internal_docs = collect_documents(INTERNAL_MOCK_DOCS_DIR)
 
@@ -85,7 +88,9 @@ class RAGService:
             "message": "",
         }
 
-    def _load_index(self) -> FAISS | None:
+    def _load_index(self):
+        from langchain_community.vectorstores import FAISS
+
         index_path = self._index_path()
         if not index_path.exists() or not any(index_path.iterdir()):
             return None

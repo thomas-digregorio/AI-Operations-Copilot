@@ -50,6 +50,27 @@ make test
 ruff check app tests frontend
 ```
 
+## Deploy to GCP (Cloud Run)
+Prereqs:
+- `gcloud auth login`
+- `gcloud config set project ulbrich-app`
+- Required APIs enabled (`run`, `cloudbuild`, `artifactregistry`, `secretmanager`, `compute`, `monitoring`, `logging`)
+
+Deploy both API + UI (builds two container images and deploys two Cloud Run services):
+```bash
+make deploy-gcp
+```
+The deployment build uses `requirements.api.txt` and `requirements.ui.txt` for leaner Cloud Run images.
+
+Optional overrides:
+```bash
+PROJECT_ID=ulbrich-app REGION=us-central1 TAG=manual-001 make deploy-gcp
+```
+
+After deploy, the script prints:
+- API URL (FastAPI docs at `/docs`)
+- UI URL (public Streamlit app)
+
 ## Key APIs
 - Quote: `/quote/validate`, `/quote/draft`, `/quote/answer`, `/quote/history/similar`
 - Retrieval: `/retrieval/ingest/public`, `/retrieval/ingest/internal`, `/retrieval/reindex`, `/retrieval/search`, `/retrieval/docs`

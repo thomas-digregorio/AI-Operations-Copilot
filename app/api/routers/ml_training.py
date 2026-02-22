@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -7,13 +9,18 @@ from app.schemas.ml import TrainSteelFaultModelRequest, TrainSteelFaultModelResp
 from app.services.steel_model_service import SteelModelService
 
 router = APIRouter(prefix="/ml", tags=["ml-training"])
-service = SteelModelService()
+
+
+@lru_cache(maxsize=1)
+def get_model_service() -> SteelModelService:
+    return SteelModelService()
 
 
 @router.post("/train/steel-faults", response_model=TrainSteelFaultModelResponse)
 def train_steel_fault_model(
     request: TrainSteelFaultModelRequest,
     db: Session = Depends(get_db_session),
+    service: SteelModelService = Depends(get_model_service),
 ) -> TrainSteelFaultModelResponse:
     selected_model = request.model_type.lower()
     if selected_model not in {"xgboost", "xgb", "xgbclassifier"}:

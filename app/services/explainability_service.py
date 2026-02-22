@@ -5,7 +5,6 @@ import json
 import joblib
 import numpy as np
 import pandas as pd
-import shap
 
 from app.core.constants import DEFAULT_FEATURES_PATH, DEFAULT_MODEL_PATH
 
@@ -21,6 +20,8 @@ class ExplainabilityService:
         return model, meta["feature_columns"], meta["label_columns"]
 
     def explain_local(self, features: dict[str, float]) -> dict:
+        import shap
+
         model, feature_columns, label_columns = self._load_model_meta()
 
         row = pd.DataFrame(

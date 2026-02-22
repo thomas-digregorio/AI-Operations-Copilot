@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -18,13 +20,18 @@ from app.schemas.quote import (
 from app.services.quote_assistant_service import QuoteAssistantService
 
 router = APIRouter(prefix="/quote", tags=["quote"])
-service = QuoteAssistantService()
+
+
+@lru_cache(maxsize=1)
+def get_quote_service() -> QuoteAssistantService:
+    return QuoteAssistantService()
 
 
 @router.post("/validate", response_model=QuoteValidationResponse)
 def validate_quote(
     quote: QuoteRequest,
     db: Session = Depends(get_db_session),
+    service: QuoteAssistantService = Depends(get_quote_service),
 ) -> QuoteValidationResponse:
     upsert_quote_request(db, quote.request_id, quote.model_dump())
     result = service.validate(quote)
@@ -36,6 +43,7 @@ def validate_quote(
 def draft_quote(
     quote: QuoteRequest,
     db: Session = Depends(get_db_session),
+    service: QuoteAssistantService = Depends(get_quote_service),
 ) -> QuoteDraftResponse:
     upsert_quote_request(db, quote.request_id, quote.model_dump())
     result = service.draft(quote, db=db)
@@ -62,6 +70,7 @@ def draft_quote(
 def answer_quote(
     request: QuoteAnswerRequest,
     db: Session = Depends(get_db_session),
+    service: QuoteAssistantService = Depends(get_quote_service),
 ) -> QuoteAnswerResponse:
     return service.answer(request.question or request.query or "", request.top_k, db=db)
 
@@ -74,6 +83,7 @@ def similar_quote_history(
     thickness_mm: float | None = Query(default=None),
     width_mm: float | None = Query(default=None),
     top_k: int = Query(default=5, ge=1, le=20),
+    service: QuoteAssistantService = Depends(get_quote_service),
 ) -> SimilarQuoteQueryResponse:
     probe = QuoteRequest(
         request_id="history-similar-query",

@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -16,14 +18,23 @@ from app.services.explainability_service import ExplainabilityService
 from app.services.steel_model_service import SteelModelService
 
 router = APIRouter(prefix="/ml", tags=["ml-inference"])
-model_service = SteelModelService()
-explain_service = ExplainabilityService()
+
+
+@lru_cache(maxsize=1)
+def get_model_service() -> SteelModelService:
+    return SteelModelService()
+
+
+@lru_cache(maxsize=1)
+def get_explainability_service() -> ExplainabilityService:
+    return ExplainabilityService()
 
 
 @router.post("/predict/steel-faults", response_model=SteelFaultPredictionResult)
 def predict_steel_fault(
     request: SteelFaultPredictionRequest,
     db: Session = Depends(get_db_session),
+    model_service: SteelModelService = Depends(get_model_service),
 ) -> SteelFaultPredictionResult:
     out = model_service.predict_single(request.features)
     create_prediction_audit(
@@ -48,6 +59,7 @@ def predict_steel_fault(
 def predict_steel_fault_batch(
     request: SteelFaultBatchPredictionRequest,
     db: Session = Depends(get_db_session),
+    model_service: SteelModelService = Depends(get_model_service),
 ) -> SteelFaultBatchPredictionResponse:
     out = model_service.predict_batch(request.rows)
     for row_in, row_out in zip(request.rows, out, strict=False):
@@ -69,6 +81,7 @@ def predict_steel_fault_batch(
 def explain_local(
     request: SteelLocalExplainRequest,
     db: Session = Depends(get_db_session),
+    explain_service: ExplainabilityService = Depends(get_explainability_service),
 ) -> SteelLocalExplainResponse:
     out = explain_service.explain_local(request.features)
     create_prediction_audit(
@@ -82,5 +95,6 @@ def explain_local(
 
 @router.get("/explain/global", response_model=SteelGlobalExplainResponse)
 def explain_global(top_k: int = Query(default=20, ge=1, le=100)) -> SteelGlobalExplainResponse:
+    explain_service = get_explainability_service()
     out = explain_service.explain_global(top_k=top_k)
     return SteelGlobalExplainResponse(**out)

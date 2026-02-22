@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -221,7 +222,8 @@ if "feature_editor" not in st.session_state:
 
 with st.sidebar:
     st.header("Control Panel")
-    api_base = st.text_input("API Base URL", value="http://localhost:8000")
+    default_api_base = os.getenv("API_BASE_URL", "http://localhost:8000")
+    api_base = st.text_input("API Base URL", value=default_api_base)
     st.caption(
         "Demo URL: `http://localhost:8501` after `make run-ui`.\n"
         "API docs: `http://localhost:8000/docs`."
