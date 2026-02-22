@@ -10,6 +10,10 @@ UI_SERVICE="${UI_SERVICE:-ulbrich-ui}"
 
 API_SA="${API_SA:-ulbrich-run-api@${PROJECT_ID}.iam.gserviceaccount.com}"
 UI_SA="${UI_SA:-ulbrich-run-ui@${PROJECT_ID}.iam.gserviceaccount.com}"
+ADMIN_API_TOKEN="${ADMIN_API_TOKEN:-}"
+
+PROJECT_NUMBER="${PROJECT_NUMBER:-$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')}"
+UI_ORIGIN="https://${UI_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
 
 TAG="${TAG:-$(date +%Y%m%d-%H%M%S)}"
 API_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/api:${TAG}"
@@ -18,6 +22,7 @@ UI_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/ui:${TAG}"
 echo "Project: ${PROJECT_ID}"
 echo "Region: ${REGION}"
 echo "Tag: ${TAG}"
+echo "Project Number: ${PROJECT_NUMBER}"
 
 gcloud config set project "${PROJECT_ID}" >/dev/null
 
@@ -41,7 +46,7 @@ gcloud run deploy "${API_SERVICE}" \
   --timeout=300 \
   --min-instances=0 \
   --max-instances=2 \
-  --set-env-vars="APP_ENV=cloud,LOG_LEVEL=INFO,CORS_ALLOW_ORIGINS=*,DATABASE_URL=sqlite:////tmp/app.db,DATA_DIR=/tmp/data,MODEL_DIR=/tmp/data/artifacts/models,VECTOR_DIR=/tmp/data/artifacts/vector_index,EMBEDDING_PROVIDER=local,EMBEDDING_MODEL=BAAI/bge-small-en-v1.5,LLM_PROVIDER=ollama,LLM_MODEL=llama3.1:8b,OLLAMA_BASE_URL=http://127.0.0.1:11434,USE_LLM_FALLBACK=true" \
+  --set-env-vars="APP_ENV=cloud,LOG_LEVEL=INFO,ENABLE_API_DOCS=false,CORS_ALLOW_ORIGINS=${UI_ORIGIN},CORS_ALLOW_CREDENTIALS=false,DATABASE_URL=sqlite:////tmp/app.db,DATA_DIR=/tmp/data,MODEL_DIR=/tmp/data/artifacts/models,VECTOR_DIR=/tmp/data/artifacts/vector_index,EMBEDDING_PROVIDER=local,EMBEDDING_MODEL=BAAI/bge-small-en-v1.5,LLM_PROVIDER=ollama,LLM_MODEL=llama3.1:8b,OLLAMA_BASE_URL=http://127.0.0.1:11434,USE_LLM_FALLBACK=true,MAX_REQUEST_SIZE_BYTES=1000000,RATE_LIMIT_ENABLED=true,RATE_LIMIT_DEFAULT_PER_MINUTE=60,RATE_LIMIT_HEALTH_PER_MINUTE=120,RATE_LIMIT_QUOTE_PER_MINUTE=30,RATE_LIMIT_QUOTE_LLM_PER_MINUTE=10,RATE_LIMIT_ML_PER_MINUTE=30,RATE_LIMIT_ADMIN_PER_MINUTE=5,ADMIN_API_TOKEN=${ADMIN_API_TOKEN}" \
   --image="${API_IMAGE}"
 
 API_URL="$(gcloud run services describe "${API_SERVICE}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"
@@ -67,7 +72,7 @@ gcloud run deploy "${UI_SERVICE}" \
   --timeout=300 \
   --min-instances=0 \
   --max-instances=1 \
-  --set-env-vars="API_BASE_URL=${API_URL}" \
+  --set-env-vars="API_BASE_URL=${API_URL},ALLOW_API_BASE_OVERRIDE=false" \
   --image="${UI_IMAGE}"
 
 UI_URL="$(gcloud run services describe "${UI_SERVICE}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"

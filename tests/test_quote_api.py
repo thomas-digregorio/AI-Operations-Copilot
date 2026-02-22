@@ -34,8 +34,9 @@ def test_quote_validate_endpoint():
 def test_quote_draft_endpoint_fallback_mode(monkeypatch):
     seed_quote_data()
     seed_docs()
-    from app.api.routers.quote import service
+    from app.api.routers.quote import get_quote_service
 
+    service = get_quote_service()
     monkeypatch.setattr(service.settings, "llm_provider", "disabled")
 
     resp = client.post("/quote/draft", json=_payload())

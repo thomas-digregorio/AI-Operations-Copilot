@@ -2,6 +2,10 @@
 
 Local-first, production-style AI engineering demo for manufacturing workflows.
 
+## Live Demo (GCP)
+- Start here: `https://ulbrich-ui-685439212679.us-central1.run.app`
+- API health: `https://ulbrich-api-685439212679.us-central1.run.app/health`
+
 ## Modules
 - Quote Assistant: RAG + deterministic rule engine + structured quote draft JSON.
 - Steel Defect Classifier: multiclass ML training, scoring APIs, explainability, and drift summaries.
@@ -35,7 +39,8 @@ make run-ui
 7. Open the live demo:
 ```text
 UI:  http://localhost:8501
-API: http://localhost:8000/docs
+API: http://localhost:8000/health
+Docs (local only): http://localhost:8000/docs
 ```
 8. (Optional) Manage DB schema with Alembic:
 ```bash
@@ -62,14 +67,37 @@ make deploy-gcp
 ```
 The deployment build uses `requirements.api.txt` and `requirements.ui.txt` for leaner Cloud Run images.
 
+Cloud deploy hardening defaults:
+- API docs disabled (`ENABLE_API_DOCS=false`)
+- CORS restricted to explicit UI origin(s) (wildcard disabled in non-local env)
+- Request-size limit enabled (`MAX_REQUEST_SIZE_BYTES=1000000`)
+- Per-endpoint rate limits enabled
+- UI API target override disabled (`ALLOW_API_BASE_OVERRIDE=false`)
+- Admin endpoints (`/ml/train/*`, `/retrieval/ingest/*`, `/retrieval/reindex`, `/retrieval/index`) are token-gated:
+  - If `ADMIN_API_TOKEN` is set, callers must send `X-Admin-Token`
+  - If unset in non-local env, admin endpoints are disabled (503)
+
 Optional overrides:
 ```bash
 PROJECT_ID=ulbrich-app REGION=us-central1 TAG=manual-001 make deploy-gcp
 ```
+```bash
+PROJECT_ID=ulbrich-app REGION=us-central1 ADMIN_API_TOKEN='replace-me' make deploy-gcp
+```
 
 After deploy, the script prints:
-- API URL (FastAPI docs at `/docs`)
+- API URL (`/health`; docs disabled in cloud by default)
 - UI URL (public Streamlit app)
+
+Current public demo URLs:
+- UI: `https://ulbrich-ui-685439212679.us-central1.run.app`
+- API: `https://ulbrich-api-685439212679.us-central1.run.app`
+
+Admin route example:
+```bash
+curl -X POST "$API_URL/retrieval/reindex" \
+  -H "X-Admin-Token: $ADMIN_API_TOKEN"
+```
 
 ## Key APIs
 - Quote: `/quote/validate`, `/quote/draft`, `/quote/answer`, `/quote/history/similar`

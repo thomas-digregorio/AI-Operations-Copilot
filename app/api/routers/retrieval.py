@@ -3,6 +3,7 @@ from functools import lru_cache
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.core.security import require_admin_token
 from app.db.session import get_db_session
 from app.pipelines.ingest_internal_mock_docs import main as ingest_internal_pipeline
 from app.pipelines.ingest_ulbrich_public_docs import main as ingest_public_pipeline
@@ -37,6 +38,7 @@ def search_docs(
 def ingest_public_docs(
     db: Session = Depends(get_db_session),
     service: RAGService = Depends(get_rag_service),
+    _admin: None = Depends(require_admin_token),
 ) -> RetrievalIngestResponse:
     ingest_public_pipeline()
     out = service.ingest_source("public", db=db)
@@ -47,6 +49,7 @@ def ingest_public_docs(
 def ingest_internal_docs(
     db: Session = Depends(get_db_session),
     service: RAGService = Depends(get_rag_service),
+    _admin: None = Depends(require_admin_token),
 ) -> RetrievalIngestResponse:
     ingest_internal_pipeline()
     out = service.ingest_source("internal", db=db)
@@ -57,6 +60,7 @@ def ingest_internal_docs(
 def reindex_docs(
     db: Session = Depends(get_db_session),
     service: RAGService = Depends(get_rag_service),
+    _admin: None = Depends(require_admin_token),
 ) -> RetrievalReindexResponse:
     out = service.build_index(db=db)
     return RetrievalReindexResponse(**out)
@@ -66,6 +70,7 @@ def reindex_docs(
 def build_index(
     db: Session = Depends(get_db_session),
     service: RAGService = Depends(get_rag_service),
+    _admin: None = Depends(require_admin_token),
 ) -> RetrievalReindexResponse:
     out = service.build_index(db=db)
     return RetrievalReindexResponse(**out)

@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
+from app.core.config import get_settings
 from app.core.constants import (
     DEFAULT_FEATURES_PATH,
     DEFAULT_METRICS_PATH,
@@ -60,7 +61,23 @@ LABEL_COLUMNS = [
 class SteelModelService:
     def _resolve_dataset_path(self, dataset_path: str | None = None) -> Path:
         if dataset_path:
-            return Path(dataset_path)
+            candidate = Path(dataset_path).expanduser()
+            if not candidate.is_absolute():
+                candidate = (STEEL_RAW_DIR / candidate).resolve()
+            else:
+                candidate = candidate.resolve()
+            settings = get_settings()
+            if settings.app_env.lower() != "local":
+                raw_root = STEEL_RAW_DIR.resolve()
+                if candidate != raw_root and raw_root not in candidate.parents:
+                    raise ValueError(
+                        "dataset_path must resolve under data/raw/steel_plates_faults/."
+                    )
+            if candidate.suffix.lower() not in {".csv", ".data"}:
+                raise ValueError("dataset_path must point to a .csv or .data file.")
+            if not candidate.exists():
+                raise FileNotFoundError(f"dataset_path not found: {candidate}")
+            return candidate
         candidates = list(STEEL_RAW_DIR.glob("*.csv")) + list(STEEL_RAW_DIR.glob("*.data"))
         if not candidates:
             raise FileNotFoundError(

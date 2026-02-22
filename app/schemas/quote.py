@@ -8,22 +8,22 @@ from app.schemas.common import Citation, WarningItem
 
 
 class QuoteRequest(BaseModel):
-    request_id: str
-    customer_name: str | None = None
-    industry: str | None = None
-    alloy_name: str | None = None
-    alloy_family: str | None = None
-    product_form: str | None = None
+    request_id: str = Field(min_length=1, max_length=64)
+    customer_name: str | None = Field(default=None, max_length=200)
+    industry: str | None = Field(default=None, max_length=120)
+    alloy_name: str | None = Field(default=None, max_length=120)
+    alloy_family: str | None = Field(default=None, max_length=120)
+    product_form: str | None = Field(default=None, max_length=120)
     thickness_mm: float | None = None
     width_mm: float | None = None
     qty_kg: float | None = None
     required_lead_time_days: int | None = None
     lead_time_requested_days: int | None = None
-    cert_required: str | None = None
-    temper: str | None = None
-    finish: str | None = None
-    application_description: str | None = None
-    special_requirements: str | None = None
+    cert_required: str | None = Field(default=None, max_length=120)
+    temper: str | None = Field(default=None, max_length=120)
+    finish: str | None = Field(default=None, max_length=120)
+    application_description: str | None = Field(default=None, max_length=1000)
+    special_requirements: str | None = Field(default=None, max_length=1000)
 
     @model_validator(mode="after")
     def normalize_lead_time(self) -> "QuoteRequest":
@@ -96,9 +96,9 @@ class QuoteDraftResponse(BaseModel):
 
 
 class QuoteAnswerRequest(BaseModel):
-    question: str | None = None
-    query: str | None = None
-    top_k: int = 5
+    question: str | None = Field(default=None, max_length=1000)
+    query: str | None = Field(default=None, max_length=1000)
+    top_k: int = Field(default=5, ge=1, le=10)
 
     @model_validator(mode="after")
     def validate_question(self) -> "QuoteAnswerRequest":

@@ -3,6 +3,7 @@ from functools import lru_cache
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.core.security import require_admin_token
 from app.db.crud.predictions import create_ml_training_run, create_training_run
 from app.db.session import get_db_session
 from app.schemas.ml import TrainSteelFaultModelRequest, TrainSteelFaultModelResponse
@@ -21,6 +22,7 @@ def train_steel_fault_model(
     request: TrainSteelFaultModelRequest,
     db: Session = Depends(get_db_session),
     service: SteelModelService = Depends(get_model_service),
+    _admin: None = Depends(require_admin_token),
 ) -> TrainSteelFaultModelResponse:
     selected_model = request.model_type.lower()
     if selected_model not in {"xgboost", "xgb", "xgbclassifier"}:

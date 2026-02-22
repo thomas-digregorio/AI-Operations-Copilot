@@ -28,6 +28,22 @@ class Settings(BaseSettings):
 
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     cors_allow_origins: str = Field(default="*", alias="CORS_ALLOW_ORIGINS")
+    cors_allow_credentials: bool = Field(default=False, alias="CORS_ALLOW_CREDENTIALS")
+    admin_api_token: str = Field(default="", alias="ADMIN_API_TOKEN")
+    enable_api_docs: bool = Field(default=True, alias="ENABLE_API_DOCS")
+    ui_allow_api_base_override: bool = Field(default=True, alias="ALLOW_API_BASE_OVERRIDE")
+
+    max_request_size_bytes: int = Field(default=1_000_000, alias="MAX_REQUEST_SIZE_BYTES")
+    rate_limit_enabled: bool = Field(default=True, alias="RATE_LIMIT_ENABLED")
+    rate_limit_default_per_minute: int = Field(default=60, alias="RATE_LIMIT_DEFAULT_PER_MINUTE")
+    rate_limit_health_per_minute: int = Field(default=120, alias="RATE_LIMIT_HEALTH_PER_MINUTE")
+    rate_limit_quote_per_minute: int = Field(default=30, alias="RATE_LIMIT_QUOTE_PER_MINUTE")
+    rate_limit_quote_llm_per_minute: int = Field(
+        default=10,
+        alias="RATE_LIMIT_QUOTE_LLM_PER_MINUTE",
+    )
+    rate_limit_ml_per_minute: int = Field(default=30, alias="RATE_LIMIT_ML_PER_MINUTE")
+    rate_limit_admin_per_minute: int = Field(default=5, alias="RATE_LIMIT_ADMIN_PER_MINUTE")
 
     def ensure_runtime_dirs(self) -> None:
         for path in [

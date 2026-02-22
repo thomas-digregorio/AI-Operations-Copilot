@@ -223,7 +223,16 @@ if "feature_editor" not in st.session_state:
 with st.sidebar:
     st.header("Control Panel")
     default_api_base = os.getenv("API_BASE_URL", "http://localhost:8000")
-    api_base = st.text_input("API Base URL", value=default_api_base)
+    allow_api_override = os.getenv("ALLOW_API_BASE_OVERRIDE", "true").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    if allow_api_override:
+        api_base = st.text_input("API Base URL", value=default_api_base)
+    else:
+        api_base = default_api_base
+        st.text_input("API Base URL", value=default_api_base, disabled=True)
     st.caption(
         "Demo URL: `http://localhost:8501` after `make run-ui`.\n"
         "API docs: `http://localhost:8000/docs`."

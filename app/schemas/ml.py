@@ -1,13 +1,13 @@
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class TrainSteelFaultModelRequest(BaseModel):
-    dataset_path: str | None = None
+    dataset_path: str | None = Field(default=None, max_length=260)
     model_type: str = "xgboost"
     use_business_enriched_features: bool = False
-    random_seed: int = 42
+    random_seed: int = Field(default=42, ge=0, le=100_000)
 
 
 class TrainSteelFaultModelResponse(BaseModel):
@@ -19,11 +19,19 @@ class TrainSteelFaultModelResponse(BaseModel):
 
 
 class SteelFaultPredictionRequest(BaseModel):
-    features: dict[str, float]
+    features: dict[str, float] = Field(min_length=1, max_length=64)
 
 
 class SteelFaultBatchPredictionRequest(BaseModel):
-    rows: list[dict[str, float]]
+    rows: list[dict[str, float]] = Field(min_length=1, max_length=50)
+
+    @field_validator("rows")
+    @classmethod
+    def validate_row_feature_count(cls, rows: list[dict[str, float]]) -> list[dict[str, float]]:
+        for row in rows:
+            if len(row) > 64:
+                raise ValueError("Each batch row can include at most 64 features.")
+        return rows
 
 
 class SteelFaultPredictionResult(BaseModel):
@@ -37,7 +45,7 @@ class SteelFaultBatchPredictionResponse(BaseModel):
 
 
 class SteelLocalExplainRequest(BaseModel):
-    features: dict[str, float]
+    features: dict[str, float] = Field(min_length=1, max_length=64)
 
 
 class SteelLocalExplainResponse(BaseModel):
@@ -53,7 +61,7 @@ class SteelGlobalExplainResponse(BaseModel):
 
 
 class DriftSummaryRequest(BaseModel):
-    rows: list[dict[str, float]]
+    rows: list[dict[str, float]] = Field(min_length=1, max_length=200)
     threshold: float = Field(default=1.0, ge=0.3, le=3.0)
 
 
